@@ -1,0 +1,28 @@
+{
+    "name": "fatjon-lleshi/antares-eloquent-bridge",
+    "description": "Eloquent ORM bridge for Antares framework",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fatjon Lleshi",
+            "email": "johnlesis91@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "illuminate/database": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Antares\\Eloquent\\": "src/"
+        }
+    },
+    "extra": {
+        "antares": {
+            "providers": [
+                "Antares\\Eloquent\\EloquentServiceProvider"
+            ]
+        }
+    }
+}

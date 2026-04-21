@@ -1,0 +1,44 @@
+{
+    "name": "fatjon-lleshi/antares",
+    "description": "Lightweight API first PHP framework for PHP 8.2+",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fatjon Lleshi",
+            "email": "johnlesis91@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/johnlesis/antares-validation"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/johnlesis/antares-container"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/johnlesis/antares-router"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "fatjon-lleshi/antares-validation": "dev-main",
+        "fatjon-lleshi/antares-container": "dev-main",
+        "fatjon-lleshi/antares-router": "dev-main",
+        "nyholm/psr7": "^1.8",
+        "nyholm/psr7-server": "^1.1",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Antares\\": "src/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.1"
+    },
+    "bin": ["bin/antares"]
+}

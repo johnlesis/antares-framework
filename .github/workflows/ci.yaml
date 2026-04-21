@@ -1,0 +1,69 @@
+name: Split
+
+on:
+  push:
+    branches: [main]
+  tags:
+    - 'v*'
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: symplify/github-action-monorepo-split@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          branches: "main"
+          package-directory: 'packages/core'
+          split-repository-organization: 'johnlesis'
+          split-repository-name: 'antares'
+
+      - uses: symplify/github-action-monorepo-split@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          branches: "main"
+          package-directory: 'packages/validation'
+          split-repository-organization: 'johnlesis'
+          split-repository-name: 'antares-validation'
+
+      - uses: symplify/github-action-monorepo-split@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          branches: "main"
+          package-directory: 'packages/container'
+          split-repository-organization: 'johnlesis'
+          split-repository-name: 'antares-container'
+
+      - uses: symplify/github-action-monorepo-split@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          branches: "main"
+          package-directory: 'packages/router'
+          split-repository-organization: 'johnlesis'
+          split-repository-name: 'antares-router'
+
+      - uses: symplify/github-action-monorepo-split@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          branches: "main"
+          package-directory: 'packages/bridges/monolog'
+          split-repository-organization: 'johnlesis'
+          split-repository-name: 'antares-monolog-bridge'
+
+      - uses: symplify/github-action-monorepo-split@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          branches: "main"
+          package-directory: 'packages/bridges/eloquent'
+          split-repository-organization: 'johnlesis'
+          split-repository-name: 'antares-eloquent-bridge'
