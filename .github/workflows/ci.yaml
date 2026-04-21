@@ -15,7 +15,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          package_directory: 'packages/core'
+          package_directory: 'packages/core/'
           repository_organization: 'johnlesis'
           repository_name: 'antares'
           branch: 'main'
@@ -24,7 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          package_directory: 'packages/validation'
+          package_directory: 'packages/validation/'
           repository_organization: 'johnlesis'
           repository_name: 'antares-validation'
           branch: 'main'
@@ -33,7 +33,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          package_directory: 'packages/container'
+          package_directory: 'packages/container/'
           repository_organization: 'johnlesis'
           repository_name: 'antares-container'
           branch: 'main'
@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          package_directory: 'packages/router'
+          package_directory: 'packages/router/'
           repository_organization: 'johnlesis'
           repository_name: 'antares-router'
           branch: 'main'
@@ -51,7 +51,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          package_directory: 'packages/bridges/monolog'
+          package_directory: 'packages/bridges/monolog/'
           repository_organization: 'johnlesis'
           repository_name: 'antares-monolog-bridge'
           branch: 'main'
@@ -60,7 +60,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          package_directory: 'packages/bridges/eloquent'
+          package_directory: 'packages/bridges/eloquent/'
           repository_organization: 'johnlesis'
           repository_name: 'antares-eloquent-bridge'
           branch: 'main'
