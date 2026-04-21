@@ -14,6 +14,7 @@ use Antares\Router\Router;
 use Antares\Serialization\Serializer;
 use Antares\Validation\Validator;
 
+
 class Application
 {
     private array $providers = [];
