@@ -7,60 +7,39 @@ on:
     tags:
       - 'v*'
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
 jobs:
-  split:
+  packages_split:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - local_path: 'core'
+            split_repository: 'antares'
+          - local_path: 'validation'
+            split_repository: 'antares-validation'
+          - local_path: 'container'
+            split_repository: 'antares-container'
+          - local_path: 'router'
+            split_repository: 'antares-router'
+          - local_path: 'bridges/monolog'
+            split_repository: 'antares-monolog-bridge'
+          - local_path: 'bridges/eloquent'
+            split_repository: 'antares-eloquent-bridge'
+
     steps:
-      - uses: symplify/github-action-monorepo-split@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/checkout@v4
         with:
-          package_directory: 'packages/core/'
-          repository_organization: 'johnlesis'
-          repository_name: 'antares'
-          branch: 'main'
+          fetch-depth: 0
 
-      - uses: symplify/github-action-monorepo-split@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: danharrin/monorepo-split-github-action@v2.4.0
         with:
-          package_directory: 'packages/validation/'
+          package_directory: 'packages/${{ matrix.package.local_path }}'
           repository_organization: 'johnlesis'
-          repository_name: 'antares-validation'
+          repository_name: '${{ matrix.package.split_repository }}'
           branch: 'main'
-
-      - uses: symplify/github-action-monorepo-split@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          package_directory: 'packages/container/'
-          repository_organization: 'johnlesis'
-          repository_name: 'antares-container'
-          branch: 'main'
-
-      - uses: symplify/github-action-monorepo-split@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          package_directory: 'packages/router/'
-          repository_organization: 'johnlesis'
-          repository_name: 'antares-router'
-          branch: 'main'
-
-      - uses: symplify/github-action-monorepo-split@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          package_directory: 'packages/bridges/monolog/'
-          repository_organization: 'johnlesis'
-          repository_name: 'antares-monolog-bridge'
-          branch: 'main'
-
-      - uses: symplify/github-action-monorepo-split@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          package_directory: 'packages/bridges/eloquent/'
-          repository_organization: 'johnlesis'
-          repository_name: 'antares-eloquent-bridge'
-          branch: 'main'
+          user_name: 'johnlesis'
+          user_email: 'johnlesis91@gmail.com'
