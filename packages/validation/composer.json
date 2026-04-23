@@ -9,6 +9,12 @@
             "Antares\\Hydration\\": "src/Hydration/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Antares\\Tests\\Validation\\": "tests/Validation/",
+            "Antares\\Tests\\Hydration\\": "tests/Hydration/"
+        }
+    },
     "authors": [
         {
             "name": "Fatjon Lleshi",
@@ -20,6 +26,7 @@
         "psr/http-message": "^1.0|^2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^13.1"
+        "phpunit/phpunit": "^13.1",
+        "phpstan/phpstan": "^2.0"
     }
 }

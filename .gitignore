@@ -1,3 +1,8 @@
 vendor/
 packages/*/vendor/
 packages/bridges/*/vendor/
+packages/*/vendor/
+packages/*/composer.lock
+packages/bridges/*/vendor/
+packages/bridges/*/composer.lock
+.phpunit.result.cache

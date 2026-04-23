@@ -55,8 +55,13 @@ final class Hydrator
                 }
                 throw new HydrationException("Missing required parameter: $name");
             }
+
+             if (!$type instanceof \ReflectionNamedType) {
+                $args[] = $data[$name];
+                continue;
+            }
             
-            if ($type !== null && !$type->isBuiltin()) {
+            if (!$type->isBuiltin()) {
                 $ref = new \ReflectionClass($type->getName());
                 if (!empty($ref->getAttributes(Dto::class))) {
                     $args[] = $this->hydrate($type->getName(), $data[$name]);
@@ -72,21 +77,21 @@ final class Hydrator
                 $args[] = (int) $data[$name];
                 continue;
             }
-            if ($type !== null && $type->getName() === 'float') {
+            if ($type->getName() === 'float') {
                 if (filter_var($data[$name], FILTER_VALIDATE_FLOAT) === false) {
                     throw new HydrationException("Parameter {$name} must be a valid float.");
                 }
                 $args[] = (float)$data[$name];
                 continue;
             }
-            if ($type !== null && $type->getName() === 'bool') {
+            if ($type->getName() === 'bool') {
                 if (filter_var($data[$name], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === null) {
                     throw new HydrationException("Parameter {$name} must be a valid boolean.");
                 }
                 $args[] = (bool)$data[$name];
                 continue;
             }
-            if ($type !== null && $type->getName() === 'string') {
+            if ($type->getName() === 'string') {
                 $args[] = (string)$data[$name];
                 continue;
             }
