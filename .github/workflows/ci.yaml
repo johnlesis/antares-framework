@@ -18,21 +18,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           tools: composer
-
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
         working-directory: packages/validation
-
       - name: Run PHPUnit
         run: ./vendor/bin/phpunit
         working-directory: packages/validation
-
       - name: Run PHPStan
         run: ./vendor/bin/phpstan analyse
         working-directory: packages/validation
@@ -61,11 +57,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: danharrin/monorepo-split-github-action@v2.4.0
+      - if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: danharrin/monorepo-split-github-action@v2.4.0
         with:
           package_directory: 'packages/${{ matrix.package.local_path }}'
           repository_organization: 'johnlesis'
           repository_name: '${{ matrix.package.split_repository }}'
           branch: 'main'
+          user_name: 'johnlesis'
+          user_email: 'johnlesis91@gmail.com'
+
+      - if: "startsWith(github.ref, 'refs/tags/')"
+        uses: danharrin/monorepo-split-github-action@v2.4.0
+        with:
+          package_directory: 'packages/${{ matrix.package.local_path }}'
+          repository_organization: 'johnlesis'
+          repository_name: '${{ matrix.package.split_repository }}'
+          branch: 'main'
+          tag: ${{ github.ref_name }}
           user_name: 'johnlesis'
           user_email: 'johnlesis91@gmail.com'
