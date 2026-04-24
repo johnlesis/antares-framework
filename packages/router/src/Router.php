@@ -68,10 +68,12 @@ final class Router
                 $result[1][0],  
                 $result[1][1],  
                 $result[2],     
-                $result[1][2], 
+                $result[1][2],
             ],
             Dispatcher::NOT_FOUND         => throw new RuntimeException('Route not found', 404),
             Dispatcher::METHOD_NOT_ALLOWED => throw new RuntimeException('Method not allowed', 405),
+            default                        => throw new RuntimeException('Unexpected dispatcher result'),
+
         };
     }
 

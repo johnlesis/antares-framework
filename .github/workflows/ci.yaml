@@ -24,6 +24,8 @@ jobs:
             phpstan: true
           - path: 'container'
             phpstan: true
+          - path: 'router'
+            phpstan: true
     steps:
       - uses: actions/checkout@v4
 
