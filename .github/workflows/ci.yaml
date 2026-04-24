@@ -16,22 +16,35 @@ env:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - path: 'validation'
+            phpstan: true
+          - path: 'container'
+            phpstan: true
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           tools: composer
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
-        working-directory: packages/validation
+        working-directory: packages/${{ matrix.package.path }}
+
       - name: Run PHPUnit
         run: ./vendor/bin/phpunit
-        working-directory: packages/validation
+        working-directory: packages/${{ matrix.package.path }}
+
       - name: Run PHPStan
+        if: matrix.package.phpstan
         run: ./vendor/bin/phpstan analyse
-        working-directory: packages/validation
+        working-directory: packages/${{ matrix.package.path }}
 
   packages_split:
     runs-on: ubuntu-latest
