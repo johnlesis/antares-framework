@@ -17,9 +17,9 @@
     },
     "require": {
         "php": ">=8.2",
-        "fatjon-lleshi/antares-validation": "^0.1.1",
-        "fatjon-lleshi/antares-container": "^0.1.1",
-        "fatjon-lleshi/antares-router": "^0.1.1",
+        "fatjon-lleshi/antares-validation": "^0.1.0",
+        "fatjon-lleshi/antares-container": "^0.1.0",
+        "fatjon-lleshi/antares-router": "^0.1.0",
         "nyholm/psr7": "^1.8",
         "nyholm/psr7-server": "^1.1",
         "vlucas/phpdotenv": "^5.6"
