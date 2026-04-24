@@ -16,6 +16,9 @@ final class Hydrator
         private readonly Validator $validator
     ) {}
 
+    /**
+     * @throws HydrationException
+     */
     public function hydrate(string $className, array $data): object
     {
         $reflectionClass = new \ReflectionClass($className);

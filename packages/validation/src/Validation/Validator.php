@@ -7,7 +7,9 @@ use Antares\Validation\Exceptions\ValidationException;
 
 final class Validator
 {
-
+    /**
+     * @throws ValidationException
+     */
     public function validate(object $dto): void
     {   
 
