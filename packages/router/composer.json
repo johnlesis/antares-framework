@@ -25,6 +25,11 @@
     },
     "suggest": {
         "symfony/yaml": "Required for YAML route configuration (^6.0)"
+    },
+    "keywords": ["router", "routing", "http", "rest", "attributes", "php"],
+    "homepage": "https://github.com/johnlesis/antares-router",
+    "support": {
+        "issues": "https://github.com/johnlesis/antares-router/issues",
+        "source": "https://github.com/johnlesis/antares-router"
     }
-
 }

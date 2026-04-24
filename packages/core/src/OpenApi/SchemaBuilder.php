@@ -28,7 +28,7 @@ use Antares\Validation\Attributes\Phone;
 use Antares\Validation\Attributes\Positive;
 use Antares\Validation\Attributes\Size;
 use Antares\Validation\Attributes\Uuid;
-use Soap\Url;
+use Antares\Validation\Attributes\Url;
 
 final class SchemaBuilder
 {
@@ -60,7 +60,7 @@ final class SchemaBuilder
                 continue;
             }
 
-            $property = ['type' => $this->mapType($type)];
+            $property = ['type' => $type instanceof \ReflectionNamedType ? $this->mapType($type) : 'string'];
 
             if ($type->allowsNull()) {
                 $property['nullable'] = true;
@@ -89,9 +89,6 @@ final class SchemaBuilder
 
     private function mapType(\ReflectionNamedType $type): string
     {
-        if ($type === null) {
-            return 'string';
-        }
         return match ($type->getName()) {
             'int'    => 'integer',
             'float'  => 'number',

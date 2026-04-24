@@ -11,8 +11,8 @@ use Antares\Serialization\Serializer;
 use Antares\Validation\Attributes\Dto;
 use Antares\Validation\Attributes\File;
 use Antares\Validation\Exceptions\ValidationException;
-use Exception;
 use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
@@ -25,9 +25,8 @@ final class Dispatcher
         private readonly Serializer $serializer
     ) {}
 
-    public function dispatch(
-        ServerRequestInterface $request
-    ): Response {
+    public function dispatch(ServerRequestInterface $request): ResponseInterface
+    {
         $httpMethod = $request->getMethod();
         $uri = $request->getUri()->getPath();
         [$controllerClass, $methodName, $routeParams, $statusCode] = $this->router->match($httpMethod, $uri);
@@ -60,7 +59,7 @@ final class Dispatcher
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            throw new Exception('could not resolve parameters');
+            throw new HttpException(500, "Cannot resolve parameter \${$parameter->getName()}: no type hint and no default value.");
         }
 
         $typeName = $type->getName();
@@ -68,6 +67,7 @@ final class Dispatcher
         if ($typeName === ServerRequestInterface::class) {
             return $request;
         }
+
         if ($typeName === UploadedFileInterface::class) {
             $files = $request->getUploadedFiles();
             $file = $files[$parameter->getName()] ?? null;
@@ -93,15 +93,19 @@ final class Dispatcher
 
         if (!$type->isBuiltin()) {
             $ref = new \ReflectionClass($typeName);
-           if (!empty($ref->getAttributes(Dto::class))) {
+            if (!empty($ref->getAttributes(Dto::class))) {
                 $rawBody = (string) $request->getBody();
                 $contentType = $request->getHeaderLine('Content-Type');
 
                 if (str_contains($contentType, 'application/x-www-form-urlencoded') || str_contains($contentType, 'multipart/form-data')) {
-                    $data = $request->getParsedBody() ?? [];
+                    $parsed = $request->getParsedBody();
+                    if (!is_array($parsed)) {
+                        throw new HttpException(400, "Invalid request body.");
+                    }
+                    $data = $parsed;
                 } else {
                     if (!empty($rawBody) && json_decode($rawBody) === null) {
-                        throw new HttpException(400, "Invalid JSON body");
+                        throw new HttpException(400, "Invalid JSON body.");
                     }
                     $data = json_decode($rawBody, true) ?? [];
                 }
@@ -119,7 +123,7 @@ final class Dispatcher
             return $parameter->getDefaultValue();
         }
 
-        throw new Exception('could not resolve parameters');
+        throw new HttpException(500, "Cannot resolve parameter \${$parameter->getName()} in controller.");
     }
 
     private function castRouteParam(string $value, ?\ReflectionNamedType $type): mixed
@@ -138,9 +142,9 @@ final class Dispatcher
         };
     }
 
-    private function buildResponse(mixed $result, int $statusCode): Response
+    private function buildResponse(mixed $result, int $statusCode): ResponseInterface
     {
-        if ($result instanceof Response) {
+        if ($result instanceof ResponseInterface) {
             return $this->applyResponseBag($result);
         }
 
@@ -149,11 +153,11 @@ final class Dispatcher
         }
 
         $body = match(true) {
-            is_array($result)  => json_encode($result),
-            is_object($result) => $this->isResponseDto($result)
-                ? json_encode($this->serializer->serialize($result))
-                : json_encode(get_object_vars($result)),
-            default            => json_encode($result),
+            is_array($result)  => $this->encodeJson($result),
+           is_object($result) => $this->isResponseDto($result)
+            ? $this->encodeJson($this->serializer->serialize($result))
+            : throw new HttpException(500, "Controller returned an object without #[ResponseDto]. Add the attribute or return an array."),
+            default            => $this->encodeJson($result),
         };
 
         return $this->applyResponseBag(new Response(
@@ -163,7 +167,16 @@ final class Dispatcher
         ));
     }
 
-    private function applyResponseBag(Response $response): Response
+    private function encodeJson(mixed $data): string
+    {
+        $encoded = json_encode($data);
+        if ($encoded === false) {
+            throw new HttpException(500, "Failed to serialize response body.");
+        }
+        return $encoded;
+    }
+
+    private function applyResponseBag(ResponseInterface $response): ResponseInterface
     {
         foreach (ResponseBag::getHeaders() as $name => $value) {
             $response = $response->withHeader($name, $value);

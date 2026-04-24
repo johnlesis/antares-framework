@@ -25,9 +25,9 @@ class Application
     private ErrorHandler $errorHandler;
     private array $middleware = [];
 
-    public static function create(string $basePath): static
+    public static function create(string $basePath): self
     {
-        $app = new static();
+        $app = new self();
         $app->basePath = $basePath;
         return $app;
     }
