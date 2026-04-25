@@ -84,6 +84,39 @@ class ContainerTest extends TestCase
             $this->assertStringContainsString('Cannot resolve primitive', $e->getMessage());
         }
     }
+
+    public function test_scoped_returns_same_instance_within_request(): void
+    {
+        $container = new Container();
+        $container->scoped(FileLogger::class, fn() => new FileLogger());
+        $first = $container->make(FileLogger::class);
+        $second = $container->make(FileLogger::class);
+        $this->assertSame($first, $second);
+    }
+
+    public function test_scoped_returns_new_instance_after_clear(): void
+    {
+        $container = new Container();
+        $container->scoped(FileLogger::class, fn() => new FileLogger());
+        $first = $container->make(FileLogger::class);
+        $container->clearScoped();
+        $second = $container->make(FileLogger::class);
+        $this->assertNotSame($first, $second);
+    }
+
+    public function test_scoped_is_independent_from_singleton(): void
+    {
+        $container = new Container();
+        $container->scoped(FileLogger::class, fn() => new FileLogger());
+        $first = $container->make(FileLogger::class);
+        $container->clearScoped();
+        $second = $container->make(FileLogger::class);
+        $container->clearScoped();
+        $third = $container->make(FileLogger::class);
+        $this->assertNotSame($first, $second);
+        $this->assertNotSame($second, $third);
+        $this->assertNotSame($first, $third);
+    }
 }
 
 class NoConstructor {}

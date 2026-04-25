@@ -10,6 +10,18 @@ final class Container
     private array $instances = [];
     private array $singletons = [];
     private array $building = [];
+    private array $scopedBindings = [];
+    private array $scopedInstances = [];
+
+    public function scoped(string $className, callable $callable): void
+    {
+        $this->scopedBindings[$className] = $callable;
+    }
+
+    public function clearScoped(): void
+    {
+        $this->scopedInstances = [];
+    }
 
     public function bind(string $interface, string $className): void
     {
@@ -25,6 +37,13 @@ final class Container
     {
         if (isset($this->instances[$className])) {
             return $this->instances[$className];
+        }
+
+        if (isset($this->scopedBindings[$className])) {
+            if (!isset($this->scopedInstances[$className])) {
+                $this->scopedInstances[$className] = ($this->scopedBindings[$className])($this);
+            }
+            return $this->scopedInstances[$className];
         }
 
         if (isset($this->singletons[$className])) {

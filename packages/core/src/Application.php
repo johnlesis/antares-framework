@@ -62,6 +62,58 @@ class Application
         $this->emit($response);
     }
 
+    public function runWorker(): void
+    {
+        $this->boot();
+
+         if (!function_exists('frankenphp_handle_request')) {
+            throw new \RuntimeException('runWorker() requires FrankenPHP runtime.');
+        }
+
+        frankenphp_handle_request(function(): void {
+            $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+            $creator = new \Nyholm\Psr7Server\ServerRequestCreator($factory, $factory, $factory, $factory);
+
+            $request = $creator->fromGlobals();
+            $response = $this->handle($request);
+            $this->emit($response);
+        });
+    }
+
+    public function runSwoole(string $host = '0.0.0.0', int $port = 8000): void
+    {
+        $this->boot();
+
+        if (!class_exists(\Swoole\Http\Server::class)) {
+            throw new \RuntimeException('runSwoole() requires the Swoole extension.');
+        }
+
+        if (!class_exists(\Ilex\SwoolePsr7\SwooleServerRequestConverter::class)) {
+            throw new \RuntimeException('runSwoole() requires ilexn/swoole-psr7. Run: composer require ilexn/swoole-psr7');
+        }
+
+        $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+        $converter = new \Ilex\SwoolePsr7\SwooleServerRequestConverter($factory, $factory, $factory, $factory);
+
+        $server = new \Swoole\Http\Server($host, $port);
+
+        $server->on('request', function(
+            \Swoole\Http\Request $swooleRequest,
+            \Swoole\Http\Response $swooleResponse,
+        ) use ($converter): void {
+            $request = $converter->createFromSwoole($swooleRequest); // @phpstan-ignore class.notFound
+            $response = $this->handle($request);
+
+            $swooleResponse->status($response->getStatusCode());
+            foreach ($response->getHeaders() as $name => $values) {
+                $swooleResponse->header($name, implode(', ', $values));
+            }
+            $swooleResponse->end((string) $response->getBody());
+        });
+
+        $server->start();
+    }
+
     public function boot(): void
     {
         $dotenv = \Dotenv\Dotenv::createImmutable($this->basePath);
