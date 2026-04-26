@@ -27,7 +27,7 @@ final class Dispatcher
 
     public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
-        $this->container->clearScoped(); // @phpstan-ignore method.notFound
+        $this->container->clearScoped();
         ResponseBag::clear();
         $httpMethod = $request->getMethod();
         $uri = $request->getUri()->getPath();
