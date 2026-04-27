@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Antares;
 use Antares\Container\Container;
 use Antares\Exceptions\HttpException;
-use Antares\Http\Attributes\Guards;
+use Antares\Http\ResolverInterfaces\Resolvable;
 use Antares\Http\ResponseBag;
 use Antares\Hydration\Hydrator;
 use Antares\Router\Router;
@@ -50,11 +50,11 @@ final class Dispatcher
     ): mixed {
         $type = $parameter->getType();
 
-        $guardsAttr = $parameter->getAttributes(Guards::class);
-        if (!empty($guardsAttr)) {
-            $guardClass = $guardsAttr[0]->newInstance()->guardClass;
-            $guard = $this->container->make($guardClass);
-            return $guard->resolve($request);
+       foreach ($parameter->getAttributes() as $attr) {
+            $instance = $attr->newInstance();
+            if ($instance instanceof Resolvable) {
+                return $instance->resolve($request, $this->container);
+            }
         }
 
         if (!$type instanceof \ReflectionNamedType) {

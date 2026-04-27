@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Antares\Http\Guards;
+namespace Antares\Http\ResolverInterfaces;
 
 use Psr\Http\Message\ServerRequestInterface;
 
