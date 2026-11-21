@@ -455,6 +455,8 @@ class LogMiddleware implements MiddlewareInterface
 }
 ```
 
+Middleware is resolved through the container, so constructor dependencies are injected the same way as in controllers and guards. A new instance is built for each request unless you register the middleware as a singleton (or a scoped binding) in a service provider.
+
 ---
 
 ## Guards

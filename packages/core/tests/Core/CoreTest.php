@@ -12,6 +12,7 @@ use Antares\Serialization\Attributes\Hide;
 use Antares\Serialization\Attributes\SerializeAs;
 use Antares\Serialization\Attributes\Computed;
 use Antares\Http\ResponseBag;
+use Antares\Container\Container;
 use Antares\Middleware\Pipeline;
 use Antares\Middleware\MiddlewareInterface;
 use Nyholm\Psr7\ServerRequest;
@@ -104,7 +105,7 @@ class CoreTest extends TestCase
         $request = new ServerRequest('GET', '/');
         $called = false;
 
-        $pipeline = new Pipeline([], function (ServerRequestInterface $req) use (&$called) {
+        $pipeline = new Pipeline(new Container(), [], function (ServerRequestInterface $req) use (&$called) {
             $called = true;
             return new Response(200);
         });
@@ -120,6 +121,7 @@ class CoreTest extends TestCase
         MiddlewareOrder::$log = [];
 
         $pipeline = new Pipeline(
+            new Container(),
             [FirstMiddleware::class, SecondMiddleware::class],
             function (ServerRequestInterface $req) {
                 MiddlewareOrder::$log[] = 'destination';
@@ -129,6 +131,21 @@ class CoreTest extends TestCase
 
         $pipeline->run($request);
         $this->assertSame(['first', 'second', 'destination'], MiddlewareOrder::$log);
+    }
+
+    public function test_pipeline_resolves_middleware_dependencies_from_container(): void
+    {
+        $container = new Container();
+        $container->singleton(MiddlewareGreeting::class, fn() => new MiddlewareGreeting('hello'));
+
+        $pipeline = new Pipeline(
+            $container,
+            [InjectedMiddleware::class],
+            fn(ServerRequestInterface $req) => new Response(200),
+        );
+
+        $response = $pipeline->run(new ServerRequest('GET', '/'));
+        $this->assertSame('hello', $response->getHeaderLine('X-Greeting'));
     }
 }
 
@@ -182,6 +199,21 @@ readonly class ComputedDto
 class MiddlewareOrder
 {
     public static array $log = [];
+}
+
+final class MiddlewareGreeting
+{
+    public function __construct(public string $text) {}
+}
+
+class InjectedMiddleware implements MiddlewareInterface
+{
+    public function __construct(private MiddlewareGreeting $greeting) {}
+
+    public function handle(ServerRequestInterface $request, callable $next): ResponseInterface
+    {
+        return $next($request)->withHeader('X-Greeting', $this->greeting->text);
+    }
 }
 
 class FirstMiddleware implements MiddlewareInterface

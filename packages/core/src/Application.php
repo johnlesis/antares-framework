@@ -258,6 +258,7 @@ class Application
         // the pipeline, so middleware still runs on the way out (e.g. CORS headers on
         // a 404 or 422). Errors thrown by middleware itself are caught by the outer try.
         $pipeline = new Pipeline(
+            $this->container,
             $this->middleware,
             function (ServerRequestInterface $request): ResponseInterface {
                 try {
