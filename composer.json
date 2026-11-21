@@ -18,12 +18,12 @@
         "phpstan/phpstan": "^2.0"
     },
     "repositories": [
-        {"type": "path", "url": "packages/core", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares": "0.1.x-dev"}}},
-        {"type": "path", "url": "packages/validation", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-validation": "0.1.x-dev"}}},
-        {"type": "path", "url": "packages/container", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-container": "0.1.x-dev"}}},
-        {"type": "path", "url": "packages/router", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-router": "0.1.x-dev"}}},
-        {"type": "path", "url": "packages/bridges/monolog", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-monolog-bridge": "0.1.x-dev"}}},
-        {"type": "path", "url": "packages/bridges/eloquent", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-eloquent-bridge": "0.1.x-dev"}}}
+        {"type": "path", "url": "packages/core", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares": "0.2.x-dev"}}},
+        {"type": "path", "url": "packages/validation", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-validation": "0.2.x-dev"}}},
+        {"type": "path", "url": "packages/container", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-container": "0.2.x-dev"}}},
+        {"type": "path", "url": "packages/router", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-router": "0.2.x-dev"}}},
+        {"type": "path", "url": "packages/bridges/monolog", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-monolog-bridge": "0.2.x-dev"}}},
+        {"type": "path", "url": "packages/bridges/eloquent", "options": {"symlink": true, "versions": {"fatjon-lleshi/antares-eloquent-bridge": "0.2.x-dev"}}}
     ],
     "autoload-dev": {
         "psr-4": {

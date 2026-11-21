@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f453b62828e714b9407ddf4a7d76eba0",
+    "content-hash": "5e731f8c00bc3e042533e4a97ce9124f",
     "packages": [
         {
             "name": "brick/math",
@@ -232,16 +232,16 @@
         },
         {
             "name": "fatjon-lleshi/antares",
-            "version": "0.1.x-dev",
+            "version": "0.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/core",
-                "reference": "689f603a89df1f39d837eff1e2029cf4ee474e1f"
+                "reference": "55248feecc6e5d6016ad96b872adce1e78aefc8b"
             },
             "require": {
-                "fatjon-lleshi/antares-container": "^0.1.0",
-                "fatjon-lleshi/antares-router": "^0.1.0",
-                "fatjon-lleshi/antares-validation": "^0.1.0",
+                "fatjon-lleshi/antares-container": "^0.2.0",
+                "fatjon-lleshi/antares-router": "^0.2.0",
+                "fatjon-lleshi/antares-validation": "^0.2.0",
                 "nyholm/psr7": "^1.8",
                 "nyholm/psr7-server": "^1.1",
                 "php": ">=8.2",
@@ -296,11 +296,11 @@
         },
         {
             "name": "fatjon-lleshi/antares-container",
-            "version": "0.1.x-dev",
+            "version": "0.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/container",
-                "reference": "ccd60591b6fea5bba3f23116469522005c69418d"
+                "reference": "05b6c344268336aa9769ad60536fa9f5aa5e3ff0"
             },
             "require": {
                 "php": ">=8.2"
@@ -344,11 +344,11 @@
         },
         {
             "name": "fatjon-lleshi/antares-eloquent-bridge",
-            "version": "0.1.x-dev",
+            "version": "0.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/bridges/eloquent",
-                "reference": "18bee748b4dd21234a46c01cb79eea3d02d3ab29"
+                "reference": "c70ea4e9f2c2a3631acbe4eb3af97bf2d3800f17"
             },
             "require": {
                 "illuminate/database": "^11.0",
@@ -384,11 +384,11 @@
         },
         {
             "name": "fatjon-lleshi/antares-monolog-bridge",
-            "version": "0.1.x-dev",
+            "version": "0.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/bridges/monolog",
-                "reference": "b2d00d0f412e4e5111de5be57fb2ab4f097ab98d"
+                "reference": "49c30183e3c6f09cc239d9cae38bc4d540996396"
             },
             "require": {
                 "monolog/monolog": "^3.0",
@@ -424,11 +424,11 @@
         },
         {
             "name": "fatjon-lleshi/antares-router",
-            "version": "0.1.x-dev",
+            "version": "0.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/router",
-                "reference": "83361ebe41fc8ee3ad333bd2c3536b4018502099"
+                "reference": "3a15aee6b06ddaed537c40d6f3d068a13960af94"
             },
             "require": {
                 "nikic/fast-route": "^1.3",
@@ -477,11 +477,11 @@
         },
         {
             "name": "fatjon-lleshi/antares-validation",
-            "version": "0.1.x-dev",
+            "version": "0.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "packages/validation",
-                "reference": "4e6ca6a6913b37b1ac86ab23f985a1ad1e6d9286"
+                "reference": "8b4fbd9096b6f6da1a135b2971b809f6d0e9ed55"
             },
             "require": {
                 "php": ">=8.2",
