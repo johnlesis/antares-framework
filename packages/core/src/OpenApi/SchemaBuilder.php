@@ -11,6 +11,7 @@ use Antares\Validation\Attributes\MinLength;
 use Antares\Validation\Attributes\MaxLength;
 use Antares\Validation\Attributes\Pattern;
 use Antares\Validation\Attributes\ValidationAttribute;
+use Antares\Serialization\Attributes\Computed;
 use Antares\Serialization\Attributes\Hide;
 use Antares\Serialization\Attributes\SerializeAs;
 use Antares\Serialization\Attributes\ResponseDto;
@@ -36,7 +37,7 @@ final class SchemaBuilder
     public function build(string $dtoClass): array
     {
         $reflection = new \ReflectionClass($dtoClass);
-        $parameters = $reflection->getConstructor()->getParameters();
+        $parameters = $reflection->getConstructor()?->getParameters() ?? [];
 
         $responseDtoAttr = $reflection->getAttributes(ResponseDto::class);
         $case = !empty($responseDtoAttr) ? $responseDtoAttr[0]->newInstance()->case : CaseStyle::CamelCase;
@@ -81,11 +82,42 @@ final class SchemaBuilder
             $properties[$name] = $property;
         }
 
+        // #[Computed] methods are added to the output by the Serializer, named the same way
+        foreach ($reflection->getMethods() as $method) {
+            if (empty($method->getAttributes(Computed::class))) {
+                continue;
+            }
+
+            $name       = CaseConverter::convert($this->stripGet($method->getName()), $case);
+            $returnType = $method->getReturnType();
+            $property   = [
+                'type'     => $returnType instanceof \ReflectionNamedType ? $this->mapType($returnType) : 'string',
+                'readOnly' => true,
+            ];
+
+            if ($returnType?->allowsNull()) {
+                $property['nullable'] = true;
+            } else {
+                $required[] = $name;
+            }
+
+            $properties[$name] = $property;
+        }
+
         return [
             'type'       => 'object',
             'required'   => $required,
             'properties' => $properties,
         ];
+    }
+
+    private function stripGet(string $name): string
+    {
+        if (str_starts_with($name, 'get') && strlen($name) > 3) {
+            return lcfirst(substr($name, 3));
+        }
+
+        return $name;
     }
 
     private function mapType(\ReflectionNamedType $type): string

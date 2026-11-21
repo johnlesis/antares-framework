@@ -420,12 +420,12 @@ Output:
 
 ### Case Options
 
-| Value | Example |
-|-------|---------|
-| `snake_case` (default) | `first_name` |
-| `camel_case` | `firstName` |
-| `pascal_case` | `FirstName` |
-| `kebab_case` | `first-name` |
+| `CaseStyle` | Example |
+|-------------|---------|
+| `CaseStyle::CamelCase` (default) | `firstName` |
+| `CaseStyle::SnakeCase` | `first_name` |
+| `CaseStyle::PascalCase` | `FirstName` |
+| `CaseStyle::KebabCase` | `first-name` |
 
 ---
 
@@ -747,15 +747,34 @@ throw new HttpException(404, 'User not found');
 
 ## OpenAPI Documentation
 
-Antares auto-generates an OpenAPI 3.0 spec from your controllers, request DTOs, and response DTOs. A `GET /openapi` endpoint is registered automatically on boot — no configuration needed.
+Antares auto-generates an OpenAPI 3.0 spec from your controllers, request DTOs, and response DTOs. Two endpoints are registered automatically on boot, with no configuration needed:
+
+| Endpoint | Returns |
+|----------|---------|
+| `GET /openapi.json` | The OpenAPI 3.0 spec as JSON |
+| `GET /docs` | A Swagger UI page for the spec (loads Swagger UI from unpkg.com) |
+
+Both endpoints are public. They are **on by default, and off when `APP_ENV=production`**. Use `APP_DOCS` to override that in any environment:
+
+```env
+APP_DOCS=true    # force docs on (e.g. a staging server running APP_ENV=production)
+APP_DOCS=false   # force docs off
+```
+
+In production the route list is cached. Changing `APP_DOCS` in `.env` refreshes the cache automatically; if you set it as a real environment variable instead, run `php bin/antares cache:clear` after changing it.
 
 The spec is built entirely from your code:
 
-- Route attributes (`#[Get]`, `#[Post]`, etc.) define the paths and methods
-- Request DTO validation attributes define the request body schema and constraints — `#[Email]`, `#[Min]`, `#[MaxLength]` etc. are reflected as OpenAPI constraints
+- Route attributes (`#[Get]`, `#[Post]`, etc.) define the paths, methods and success status code
+- Route parameters (`{id}`) are documented when a method argument has the same name
+- Other `int`, `float`, `bool` and `string` arguments are documented as query parameters, the same way the dispatcher reads them: required unless they have a default value, which is shown as the parameter's default. Arguments resolved by `#[Inject]` or `#[Guard]` are left out
+- A parameter whose class has `#[Dto]` becomes the request body; its validation attributes (`#[Email]`, `#[Min]`, `#[MaxLength]` etc.) become OpenAPI constraints
 - When a controller method returns a `#[ResponseDto]` class, the response schema is auto-generated from its properties and serialization attributes
-- `#[Hide]` properties are excluded from both request and response schemas
+- `#[Hide]` properties are excluded from the schema
 - `#[SerializeAs]` key overrides are reflected in the response schema
+- `#[Computed]` methods appear in the response schema under the same name the serializer outputs, marked `readOnly`
+
+Schemas are built from **constructor parameters**, so declare DTO fields as promoted constructor properties.
 
 For example, this controller method:
 

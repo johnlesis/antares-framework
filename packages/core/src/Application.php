@@ -164,7 +164,9 @@ class Application
                 $provider->register($this->container);
             }
 
-            $router->register(\Antares\OpenApi\OpenApiController::class);
+            if ($this->docsEnabled()) {
+                $router->register(\Antares\OpenApi\OpenApiController::class);
+            }
 
             if ($useCache) {
                 $router->saveToCache($cachePath);
@@ -199,6 +201,23 @@ class Application
         } catch (\Throwable $e) {
             return $this->errorHandler->handle($e);
         }
+    }
+
+    /**
+     * /openapi.json and /docs are on by default, except when APP_ENV=production.
+     * APP_DOCS=true|false overrides that in any environment.
+     */
+    private function docsEnabled(): bool
+    {
+        $flag = $_ENV['APP_DOCS'] ?? null;
+        if (is_string($flag) && $flag !== '') {
+            $enabled = filter_var($flag, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($enabled !== null) {
+                return $enabled;
+            }
+        }
+
+        return ($_ENV['APP_ENV'] ?? 'local') !== 'production';
     }
 
     private function generateFingerprint(): string

@@ -2,10 +2,11 @@
 
 namespace Antares\OpenApi;
 
-use Reflection;
-use ReflectionClass;
+use Antares\Http\ResolverInterfaces\Resolvable;
+use Antares\Validation\Attributes\Dto;
 
-final class PathBuilder{
+final class PathBuilder
+{
     public function build(array $route): array
     {
         $httpVerb   = strtolower($route[0]);
@@ -20,7 +21,8 @@ final class PathBuilder{
         $reflection = new \ReflectionMethod($controller, $method);
         $parameters = $reflection->getParameters();
 
-        $pathParameters = [];
+        $pathParameters  = [];
+        $queryParameters = [];
         $requestBody    = null;
         $responseRef    = null;
 
@@ -28,6 +30,11 @@ final class PathBuilder{
             $type = $parameter->getType();
 
             if (!$type instanceof \ReflectionNamedType) {
+                continue;
+            }
+
+            // Resolved by an attribute (#[Inject], #[Guard], ...), not from the request
+            if (!empty($parameter->getAttributes(Resolvable::class, \ReflectionAttribute::IS_INSTANCEOF))) {
                 continue;
             }
 
@@ -45,7 +52,7 @@ final class PathBuilder{
 
             if (!$type->isBuiltin() && class_exists($typeName)) {
                 $ref = new \ReflectionClass($typeName);
-                if ($ref->isReadOnly()) {
+                if (!empty($ref->getAttributes(Dto::class))) {
                     $requestBody = [
                         'required' => true,
                         'content'  => [
@@ -55,6 +62,21 @@ final class PathBuilder{
                         ],
                     ];
                 }
+                continue;
+            }
+
+            // Scalars not in the path are read from the query string by the Dispatcher
+            if (in_array($typeName, ['int', 'float', 'bool', 'string'], true)) {
+                $schema = ['type' => $this->mapType($type)];
+                if ($parameter->isDefaultValueAvailable() && $parameter->getDefaultValue() !== null) {
+                    $schema['default'] = $parameter->getDefaultValue();
+                }
+                $queryParameters[] = [
+                    'name'     => $parameter->getName(),
+                    'in'       => 'query',
+                    'required' => !$parameter->isDefaultValueAvailable(),
+                    'schema'   => $schema,
+                ];
             }
         }
         //response
@@ -77,8 +99,9 @@ final class PathBuilder{
             ],
         ];
 
-        if (!empty($pathParameters)) {
-            $operation['parameters'] = $pathParameters;
+        $operationParameters = array_merge($pathParameters, $queryParameters);
+        if (!empty($operationParameters)) {
+            $operation['parameters'] = $operationParameters;
         }
 
         if ($requestBody !== null) {
