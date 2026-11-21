@@ -2,6 +2,8 @@
 
 Lightweight API-focused PHP framework for PHP 8.2+. Built around explicitness, type safety, and contract-first design.
 
+📖 **Documentation:** [antares-framework.vercel.app](https://antares-framework.vercel.app/)
+
 ## Installation
 
 ### New project (recommended)
