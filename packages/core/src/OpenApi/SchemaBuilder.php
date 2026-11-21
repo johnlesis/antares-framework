@@ -21,6 +21,7 @@ use Antares\Validation\Attributes\ArrayOf;
 use Antares\Validation\Attributes\Between;
 use Antares\Validation\Attributes\Date;
 use Antares\Validation\Attributes\DateTime;
+use Antares\Validation\Attributes\DateTimeImmutable;
 use Antares\Validation\Attributes\HexColor;
 use Antares\Validation\Attributes\In;
 use Antares\Validation\Attributes\Ip;
@@ -146,6 +147,7 @@ final class SchemaBuilder
                 $instance instanceof Url          => ['format'    => 'uri'],
                 $instance instanceof Date         => ['format'    => 'date'],
                 $instance instanceof DateTime     => ['format'    => 'date-time'],
+                $instance instanceof DateTimeImmutable => ['format' => 'date-time'],
                 $instance instanceof Ip           => ['format'    => 'ipv4'],
                 $instance instanceof HexColor     => ['pattern'   => '^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$'],
                 $instance instanceof Json         => ['type'      => 'string', 'format' => 'json'],

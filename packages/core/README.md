@@ -924,6 +924,12 @@ Point FrankenPHP at it via environment variable or `Caddyfile`:
 FRANKENPHP_CONFIG="worker worker.php"
 ```
 
+Each worker boots the app once and then handles requests in a loop until FrankenPHP stops it. Set `MAX_REQUESTS` to restart a worker after that many requests, as a guard against memory leaks:
+
+```env
+MAX_REQUESTS=500
+```
+
 ### Swoole
 
 ```bash

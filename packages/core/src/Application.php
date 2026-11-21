@@ -102,20 +102,34 @@ class Application
 
     public function runWorker(): void
     {
-        $this->boot();
-
-         if (!function_exists('frankenphp_handle_request')) {
+        if (!function_exists('frankenphp_handle_request')) {
             throw new \RuntimeException('runWorker() requires FrankenPHP runtime.');
         }
 
-        frankenphp_handle_request(function(): void {
-            $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
-            $creator = new \Nyholm\Psr7Server\ServerRequestCreator($factory, $factory, $factory, $factory);
+        $this->boot();
 
-            $request = $creator->fromGlobals();
-            $response = $this->handle($request);
-            $this->emit($response);
-        });
+        // Keep the worker alive if a client disconnects mid-response
+        ignore_user_abort(true);
+
+        $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+        $creator = new \Nyholm\Psr7Server\ServerRequestCreator($factory, $factory, $factory, $factory);
+
+        $handler = function () use ($creator): void {
+            $this->emit($this->handle($creator->fromGlobals()));
+        };
+
+        // The app stays booted: one worker handles requests until FrankenPHP stops it,
+        // or until MAX_REQUESTS (if set) to guard against memory leaks.
+        $maxRequests = (int) ($_SERVER['MAX_REQUESTS'] ?? $_ENV['MAX_REQUESTS'] ?? 0);
+
+        for ($handled = 0; $maxRequests === 0 || $handled < $maxRequests; $handled++) {
+            $keepRunning = \frankenphp_handle_request($handler);
+            gc_collect_cycles();
+
+            if (!$keepRunning) {
+                break;
+            }
+        }
     }
 
     public function runSwoole(string $host = '0.0.0.0', int $port = 8000): void
