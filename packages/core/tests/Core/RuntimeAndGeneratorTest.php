@@ -126,6 +126,33 @@ namespace Antares\Tests\Core\Runtime {
             $this->assertCount(2, FakeFranken::$queue);
         }
 
+        public function test_real_environment_variables_are_seen_by_the_app(): void
+        {
+            $base = sys_get_temp_dir() . '/antares-env-test-' . bin2hex(random_bytes(4));
+            mkdir($base);
+            file_put_contents($base . '/.env', "APP_ENV=local\n");
+            unset($_ENV['APP_ENV'], $_ENV['APP_DOCS']);
+            putenv('APP_ENV=production');
+
+            try {
+                $app = Application::create($base)->routeProviders([PingRoutes::class]);
+                $app->boot();
+
+                // The real variable wins over .env, so production defaults apply: no docs.
+                $this->assertSame('production', $_ENV['APP_ENV']);
+                $status = $app->handle(new \Nyholm\Psr7\ServerRequest('GET', '/openapi.json'))->getStatusCode();
+                $this->assertSame(404, $status);
+            } finally {
+                putenv('APP_ENV');
+                @unlink("$base/.env");
+                @unlink("$base/storage/cache/routes.php");
+                @unlink("$base/storage/cache/fingerprint");
+                @rmdir("$base/storage/cache");
+                @rmdir("$base/storage");
+                @rmdir($base);
+            }
+        }
+
         public function test_make_guard_generates_a_working_guard(): void
         {
             $dir = sys_get_temp_dir() . '/antares-make-guard-' . bin2hex(random_bytes(4));

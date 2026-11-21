@@ -800,7 +800,7 @@ APP_DOCS=true    # force docs on (e.g. a staging server running APP_ENV=producti
 APP_DOCS=false   # force docs off
 ```
 
-In production the route list is cached. Changing `APP_DOCS` in `.env` refreshes the cache automatically; if you set it as a real environment variable instead, run `php bin/antares cache:clear` after changing it.
+In production the route list is cached. Changing `APP_DOCS` in `.env` refreshes the cache automatically; if you set it as a real environment variable instead, run `php vendor/bin/antares cache:clear` after changing it.
 
 The spec is built entirely from your code:
 
@@ -860,7 +860,7 @@ APP_ENV=production
 Clear the cache manually:
 
 ```bash
-php bin/antares cache:clear
+php vendor/bin/antares cache:clear
 ```
 
 ---
@@ -884,12 +884,12 @@ Bridge packages declare their service providers in `composer.json` and are regis
 ## CLI
 
 ```bash
-php bin/antares make:controller UserController
-php bin/antares make:dto CreateUserRequest
-php bin/antares make:response UserResponse
-php bin/antares make:middleware AuthMiddleware
-php bin/antares make:guard JwtGuard
-php bin/antares cache:clear
+php vendor/bin/antares make:controller UserController
+php vendor/bin/antares make:dto CreateUserRequest
+php vendor/bin/antares make:response UserResponse
+php vendor/bin/antares make:middleware AuthMiddleware
+php vendor/bin/antares make:guard JwtGuard
+php vendor/bin/antares cache:clear
 ```
 
 ---

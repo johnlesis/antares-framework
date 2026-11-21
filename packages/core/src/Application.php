@@ -170,6 +170,12 @@ class Application
     {
         $dotenv = \Dotenv\Dotenv::createImmutable($this->basePath);
         $dotenv->safeLoad();
+
+        // The framework reads $_ENV, which PHP usually leaves empty (variables_order =
+        // "GPCS"), and Dotenv skips variables that already exist. Copy the real
+        // environment in, so APP_ENV=production set by Docker, systemd, etc. is seen,
+        // and wins over .env.
+        $_ENV = getenv() + $_ENV;
         
         $_ENV['APP_BASE_PATH'] = $this->basePath;
         $this->container = new Container();

@@ -5,21 +5,51 @@ use PDO;
 
 abstract class MigrationCommand
 {
+    /** Ports used when DB_PORT is not set. */
+    private const DEFAULT_PORTS = [
+        'mysql'  => '3306',
+        'pgsql'  => '5432',
+        'sqlsrv' => '1433',
+        'oci'    => '1521',
+    ];
+
     public function connect(): PDO
     {
-        $driver   = $_ENV['DB_DRIVER']   ?? 'mysql';
-        $host     = $_ENV['DB_HOST']     ?? '127.0.0.1';
-        $port     = $_ENV['DB_PORT']     ?? '3306';
-        $database = $_ENV['DB_DATABASE'] ?? '';
-        $username = $_ENV['DB_USERNAME'] ?? '';
-        $password = $_ENV['DB_PASSWORD'] ?? '';
-
         return new PDO(
-            "{$driver}:host={$host};port={$port};dbname={$database}",
-            $username,
-            $password,
+            $this->dsn(),
+            $_ENV['DB_USERNAME'] ?? '',
+            $_ENV['DB_PASSWORD'] ?? '',
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
         );
+    }
+
+    /**
+     * The PDO connection string for DB_DRIVER. Set DB_DSN to use your own instead,
+     * e.g. an Oracle TNS name or extra driver options.
+     */
+    public function dsn(): string
+    {
+        if (!empty($_ENV['DB_DSN'])) {
+            return $_ENV['DB_DSN'];
+        }
+
+        $driver   = $_ENV['DB_DRIVER']   ?? 'mysql';
+        $host     = $_ENV['DB_HOST']     ?? '127.0.0.1';
+        $port     = $_ENV['DB_PORT']     ?? self::DEFAULT_PORTS[$driver] ?? '';
+        $database = $_ENV['DB_DATABASE'] ?? '';
+
+        return match ($driver) {
+            'mysql'  => "mysql:host={$host};port={$port};dbname={$database};charset=" . ($_ENV['DB_CHARSET'] ?? 'utf8mb4'),
+            'pgsql'  => "pgsql:host={$host};port={$port};dbname={$database}",
+            // DB_DATABASE is the database file path, or :memory:
+            'sqlite' => "sqlite:{$database}",
+            'sqlsrv' => "sqlsrv:Server={$host},{$port};Database={$database}",
+            // DB_DATABASE is the Oracle service name (Easy Connect syntax)
+            'oci'    => "oci:dbname=//{$host}:{$port}/{$database}",
+            default  => throw new \RuntimeException(
+                "Unsupported DB_DRIVER '{$driver}'. Use mysql, pgsql, sqlite, sqlsrv or oci, or set DB_DSN."
+            ),
+        };
     }
 
     public function ensureMigrationsTable(PDO $pdo): void
@@ -53,6 +83,14 @@ abstract class MigrationCommand
                         END IF;
                 END;
             "),
+            'sqlite' => $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS migrations (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        migration VARCHAR(255) NOT NULL,
+                        batch INT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                "),
             'pgsql'  => $pdo->exec("
                     CREATE TABLE IF NOT EXISTS migrations (
                         id SERIAL PRIMARY KEY,
