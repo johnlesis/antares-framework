@@ -280,7 +280,7 @@ class MediaController
 {
     #[Post('/upload', 201)]
     public function upload(
-        #[File(maxSize: 5 * 1024 * 1024, mimeTypes: ['image/jpeg', 'image/png'])]
+        #[File(maxSize: 5120, mimes: ['image/jpeg', 'image/png'], extensions: ['jpg', 'jpeg', 'png'])]
         UploadedFileInterface $avatar,
     ): array {
         $avatar->moveTo('/storage/' . uniqid() . '.jpg');
@@ -289,7 +289,9 @@ class MediaController
 }
 ```
 
-If the file is missing or fails validation a `400` is returned automatically.
+`#[File]` options: `maxSize` in **kilobytes** (`5120` = 5 MB), `mimes` (checked against the file's real contents), `extensions` (from the client's file name), and `required` (default `true`).
+
+A missing file field, or several files under one name, returns `400`. A file that fails a `#[File]` check returns `422` with the error under the field name.
 
 ---
 
@@ -457,14 +459,14 @@ class LogMiddleware implements MiddlewareInterface
 
 ## Guards
 
-Guards protect individual routes by resolving a value from the request and injecting it into a specific controller parameter. Unlike middleware which runs globally on every request, guards run only on the routes they are applied to. Routes without a `#[Guards]` parameter are fully public.
+Guards protect individual routes by resolving a value from the request and injecting it into a specific controller parameter. Unlike middleware which runs globally on every request, guards run only on the routes they are applied to. Routes without a `#[Guard]` parameter are fully public.
 
 ### Defining a Guard
 
 Implement the `Guard` interface. Throw `HttpException` to reject the request:
 
 ```php
-use Antares\Http\Guards\Guard;
+use Antares\Http\ResolverInterfaces\Guard;
 use Antares\Exceptions\HttpException;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -655,10 +657,10 @@ class JwtGuard implements Guard
 
 ### Using Guards on Routes
 
-Apply `#[Guards(GuardClass::class)]` to the parameter that should receive the resolved value. The guard runs before the rest of the parameters are resolved — if it throws, the request is rejected immediately:
+Apply `#[Guard(GuardClass::class)]` to the parameter that should receive the resolved value. Parameters are resolved in the order they're declared, so put guard parameters **first**: if the guard throws, the request is rejected before the body is hydrated or the controller runs:
 
 ```php
-use Antares\Http\Attributes\Guards;
+use Antares\Http\Attributes\Guard;
 use Antares\Router\Attributes\Get;
 use Antares\Router\Attributes\Post;
 use Antares\Router\Attributes\Delete;
@@ -673,7 +675,7 @@ class PostController
 
     #[Post('/posts', 201)]
     public function store(
-        #[Guards(JwtGuard::class)] AuthUser $user,
+        #[Guard(JwtGuard::class)] AuthUser $user,
         CreatePostRequest $request,
     ): PostResponse {
         return new PostResponse(
@@ -685,7 +687,7 @@ class PostController
 
     #[Delete('/posts/{id}', 204)]
     public function destroy(
-        #[Guards(AdminGuard::class)] AuthUser $user,
+        #[Guard(AdminGuard::class)] AuthUser $user,
         int $id,
     ): void {
         // only admins reach here
@@ -700,8 +702,8 @@ class ReportController
 {
     #[Get('/reports')]
     public function index(
-        #[Guards(TenantGuard::class)] Tenant $tenant,
-        #[Guards(JwtGuard::class)] AuthUser $user,
+        #[Guard(TenantGuard::class)] Tenant $tenant,
+        #[Guard(JwtGuard::class)] AuthUser $user,
     ): array {
         return ['tenant' => $tenant->id, 'user' => $user->id];
     }
@@ -1151,7 +1153,7 @@ class PostController
 
     #[Post('/posts', 201)]
     public function store(
-        #[Guards(JwtGuard::class)] AuthUser $user,
+        #[Guard(JwtGuard::class)] AuthUser $user,
         CreatePostRequest $request,
     ): PostResponse {
         return new PostResponse(
@@ -1167,7 +1169,7 @@ class PostController
 
     #[Delete('/posts/{id}', 204)]
     public function destroy(
-        #[Guards(AdminGuard::class)] AuthUser $user,
+        #[Guard(AdminGuard::class)] AuthUser $user,
         int $id,
     ): void {
         // only admins reach here — AdminGuard throws 403 for non-admins

@@ -243,6 +243,48 @@ class ErrorHandlerTest extends TestCase
         $this->assertCount(1, $this->logger->records);
     }
 
+    // Middleware sees error responses
+
+    public function test_middleware_runs_on_error_responses(): void
+    {
+        $backup = $_ENV;
+        try {
+            $_ENV = array_merge($_ENV, ['APP_DOCS' => 'false']);
+            $app = Application::create(sys_get_temp_dir())
+                ->providers([RecordingLoggerProvider::class])
+                ->routeProviders([ErrorRoutes::class])
+                ->middleware([HeaderMiddleware::class]);
+            $app->boot();
+        } finally {
+            $_ENV = $backup;
+        }
+
+        foreach (['/things' => 200, '/nope' => 404, '/broken' => 500] as $path => $status) {
+            $response = $app->handle(new ServerRequest('GET', $path));
+            $this->assertSame($status, $response->getStatusCode(), $path);
+            $this->assertSame('yes', $response->getHeaderLine('X-Middleware'), "middleware header missing on $path");
+        }
+    }
+
+    public function test_exception_in_middleware_still_becomes_an_error_response(): void
+    {
+        $backup = $_ENV;
+        try {
+            $_ENV = array_merge($_ENV, ['APP_DOCS' => 'false', 'APP_DEBUG' => 'false']);
+            $app = Application::create(sys_get_temp_dir())
+                ->providers([RecordingLoggerProvider::class])
+                ->routeProviders([ErrorRoutes::class])
+                ->middleware([ThrowingMiddleware::class]);
+            $app->boot();
+        } finally {
+            $_ENV = $backup;
+        }
+
+        $response = $app->handle(new ServerRequest('GET', '/things'));
+        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame('Internal Server Error', $this->body($response)['title']);
+    }
+
     // Application::exceptions() validation
 
     /** @return array<string, array{array}> */
@@ -325,5 +367,21 @@ final class ErrorRoutes implements ServiceProvider
     public function register(Container $container): void
     {
         $container->make(Router::class)->register(ErrorController::class);
+    }
+}
+
+final class HeaderMiddleware implements \Antares\Middleware\MiddlewareInterface
+{
+    public function handle(\Psr\Http\Message\ServerRequestInterface $request, callable $next): \Psr\Http\Message\ResponseInterface
+    {
+        return $next($request)->withHeader('X-Middleware', 'yes');
+    }
+}
+
+final class ThrowingMiddleware implements \Antares\Middleware\MiddlewareInterface
+{
+    public function handle(\Psr\Http\Message\ServerRequestInterface $request, callable $next): \Psr\Http\Message\ResponseInterface
+    {
+        throw new \RuntimeException('Middleware broke');
     }
 }

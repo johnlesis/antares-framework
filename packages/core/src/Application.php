@@ -254,9 +254,18 @@ class Application
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        // Errors from routing, guards, DTOs and controllers become a response *inside*
+        // the pipeline, so middleware still runs on the way out (e.g. CORS headers on
+        // a 404 or 422). Errors thrown by middleware itself are caught by the outer try.
         $pipeline = new Pipeline(
             $this->middleware,
-            fn($request) => $this->dispatcher->dispatch($request),
+            function (ServerRequestInterface $request): ResponseInterface {
+                try {
+                    return $this->dispatcher->dispatch($request);
+                } catch (\Throwable $e) {
+                    return $this->errorHandler->handle($e);
+                }
+            },
         );
 
         try {
