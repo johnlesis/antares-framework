@@ -61,7 +61,7 @@ final class Dispatcher
             if ($parameter->isDefaultValueAvailable()) {
                 return $parameter->getDefaultValue();
             }
-            throw new HttpException(500, "Cannot resolve parameter \${$parameter->getName()}: no type hint and no default value.");
+            throw new \LogicException("Cannot resolve parameter \${$parameter->getName()}: no type hint and no default value.");
         }
 
         $typeName = $type->getName();
@@ -78,6 +78,11 @@ final class Dispatcher
                 throw new HttpException(400, "Missing file: {$parameter->getName()}");
             }
 
+            // e.g. <input name="avatar[]" multiple>: several files under one name
+            if (!$file instanceof UploadedFileInterface) {
+                throw new HttpException(400, "Expected a single file for {$parameter->getName()}.");
+            }
+
             $fileAttrs = $parameter->getAttributes(File::class);
             if (!empty($fileAttrs)) {
                 $error = $fileAttrs[0]->newInstance()->validate($file);
@@ -90,7 +95,7 @@ final class Dispatcher
         }
 
         if (isset($routeParams[$parameter->getName()])) {
-            return $this->castRouteParam($routeParams[$parameter->getName()], $type);
+            return $this->castParam($routeParams[$parameter->getName()], $type, $parameter->getName(), 'Route');
         }
 
         if (!$type->isBuiltin()) {
@@ -106,10 +111,7 @@ final class Dispatcher
                     }
                     $data = $parsed;
                 } else {
-                    if (!empty($rawBody) && json_decode($rawBody) === null) {
-                        throw new HttpException(400, "Invalid JSON body.");
-                    }
-                    $data = json_decode($rawBody, true) ?? [];
+                    $data = $this->decodeJsonBody($rawBody);
                 }
                 return $this->hydrator->hydrate($typeName, $data);
             }
@@ -118,28 +120,55 @@ final class Dispatcher
 
         $queryParams = $request->getQueryParams();
         if (isset($queryParams[$parameter->getName()])) {
-            return $this->castRouteParam($queryParams[$parameter->getName()], $type);
+            $value = $queryParams[$parameter->getName()];
+            // e.g. ?page[]=1 or ?page[a]=1
+            if (!is_string($value)) {
+                throw new HttpException(400, "Query parameter {$parameter->getName()} must be a single value.");
+            }
+            return $this->castParam($value, $type, $parameter->getName(), 'Query');
         }
 
         if ($parameter->isDefaultValueAvailable()) {
             return $parameter->getDefaultValue();
         }
 
-        throw new HttpException(500, "Cannot resolve parameter \${$parameter->getName()} in controller.");
+        throw new \LogicException("Cannot resolve parameter \${$parameter->getName()} in controller.");
     }
 
-    private function castRouteParam(string $value, ?\ReflectionNamedType $type): mixed
+    /**
+     * @return array<mixed>
+     */
+    private function decodeJsonBody(string $rawBody): array
+    {
+        if (trim($rawBody) === '') {
+            return [];
+        }
+
+        try {
+            $data = json_decode($rawBody, true, flags: JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new HttpException(400, "Invalid JSON body.");
+        }
+
+        // Valid JSON, but a string, number, boolean or null can't fill a DTO
+        if (!is_array($data)) {
+            throw new HttpException(400, "Request body must be a JSON object.");
+        }
+
+        return $data;
+    }
+
+    private function castParam(string $value, ?\ReflectionNamedType $type, string $name, string $source): mixed
     {
         return match($type?->getName()) {
             'int'   => filter_var($value, FILTER_VALIDATE_INT) !== false
                             ? (int) $value
-                            : throw new HttpException(400, "Route parameter must be a valid integer, got '{$value}'"),
+                            : throw new HttpException(400, "{$source} parameter {$name} must be a valid integer, got '{$value}'."),
             'float' => filter_var($value, FILTER_VALIDATE_FLOAT) !== false
                             ? (float) $value
-                            : throw new HttpException(400, "Route parameter must be a valid float, got '{$value}'"),
-            'bool'  => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null
-                            ? filter_var($value, FILTER_VALIDATE_BOOLEAN)
-                            : throw new HttpException(400, "Route parameter must be a valid boolean, got '{$value}'"),
+                            : throw new HttpException(400, "{$source} parameter {$name} must be a valid float, got '{$value}'."),
+            'bool'  => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                            ?? throw new HttpException(400, "{$source} parameter {$name} must be a valid boolean, got '{$value}'."),
             default => $value,
         };
     }
@@ -158,7 +187,7 @@ final class Dispatcher
             is_array($result)  => $this->encodeJson($result),
            is_object($result) => $this->isResponseDto($result)
             ? $this->encodeJson($this->serializer->serialize($result))
-            : throw new HttpException(500, "Controller returned an object without #[ResponseDto]. Add the attribute or return an array."),
+            : throw new \LogicException("Controller returned an object without #[ResponseDto]. Add the attribute or return an array."),
             default            => $this->encodeJson($result),
         };
 
@@ -173,7 +202,7 @@ final class Dispatcher
     {
         $encoded = json_encode($data);
         if ($encoded === false) {
-            throw new HttpException(500, "Failed to serialize response body.");
+            throw new \RuntimeException("Failed to serialize response body: " . json_last_error_msg());
         }
         return $encoded;
     }

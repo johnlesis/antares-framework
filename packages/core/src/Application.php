@@ -24,6 +24,8 @@ class Application
     private Dispatcher $dispatcher;
     private ErrorHandler $errorHandler;
     private array $middleware = [];
+    /** @var array<class-string<\Throwable>, int|array{0: int, 1: string}> */
+    private array $exceptionMap = [];
 
     public static function create(string $basePath): self
     {
@@ -47,6 +49,42 @@ class Application
     public function middleware(array $middleware): static
     {
         $this->middleware = $middleware;
+        return $this;
+    }
+
+    /**
+     * Show these exceptions to the client instead of hiding them behind a 500.
+     * Use it for exceptions you can't change, e.g. from libraries:
+     *
+     *     ->exceptions([
+     *         ModelNotFoundException::class => 404,                 // keeps the exception's message
+     *         QueryException::class         => [409, 'Conflict'],   // replaces it
+     *     ])
+     *
+     * Subclasses match too; the first matching entry wins. The map is checked here, so
+     * a typo fails on boot instead of when the exception is thrown.
+     *
+     * @param array<mixed> $map class-string<\Throwable> => int|array{0: int, 1: string}
+     */
+    public function exceptions(array $map): static
+    {
+        foreach ($map as $class => $mapping) {
+            if (!is_string($class) || !is_a($class, \Throwable::class, true)) {
+                throw new \InvalidArgumentException("exceptions(): '{$class}' is not an exception class.");
+            }
+
+            $status = is_array($mapping) ? ($mapping[0] ?? null) : $mapping;
+            $valid  = is_int($status) && $status >= 400 && $status <= 599
+                && (!is_array($mapping) || (count($mapping) === 2 && is_string($mapping[1] ?? null)));
+
+            if (!$valid) {
+                throw new \InvalidArgumentException(
+                    "exceptions(): {$class} must map to a status code (400-599) or [status, message]."
+                );
+            }
+        }
+
+        $this->exceptionMap = $map;
         return $this;
     }
 
@@ -175,7 +213,12 @@ class Application
         }
 
         $this->dispatcher = new Dispatcher($this->container, $router, new Hydrator(new Validator()), new Serializer());
-        $this->errorHandler = new ErrorHandler();
+        $this->errorHandler = new ErrorHandler(
+            debug: $this->debugEnabled(),
+            logger: $this->resolveLogger(),
+            exceptionMap: $this->exceptionMap,
+            basePath: $this->basePath,
+        );
     }
 
     private function emit(\Psr\Http\Message\ResponseInterface $response): void
@@ -209,7 +252,25 @@ class Application
      */
     private function docsEnabled(): bool
     {
-        $flag = $_ENV['APP_DOCS'] ?? null;
+        return $this->envFlag('APP_DOCS');
+    }
+
+    /**
+     * APP_DEBUG adds the real error to 500 responses. On by default, except when
+     * APP_ENV=production.
+     */
+    private function debugEnabled(): bool
+    {
+        return $this->envFlag('APP_DEBUG');
+    }
+
+    /**
+     * Reads a true/false env flag. When it's missing or not a boolean, the flag is
+     * on everywhere except APP_ENV=production.
+     */
+    private function envFlag(string $name): bool
+    {
+        $flag = $_ENV[$name] ?? null;
         if (is_string($flag) && $flag !== '') {
             $enabled = filter_var($flag, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
             if ($enabled !== null) {
@@ -218,6 +279,20 @@ class Application
         }
 
         return ($_ENV['APP_ENV'] ?? 'local') !== 'production';
+    }
+
+    /**
+     * The app's PSR-3 logger, if one is registered (e.g. by the Monolog bridge).
+     */
+    private function resolveLogger(): ?\Psr\Log\LoggerInterface
+    {
+        try {
+            $logger = $this->container->make(\Psr\Log\LoggerInterface::class);
+        } catch (\Antares\Container\ContainerException) {
+            return null;
+        }
+
+        return $logger instanceof \Psr\Log\LoggerInterface ? $logger : null;
     }
 
     private function generateFingerprint(): string

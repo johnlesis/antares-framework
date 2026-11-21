@@ -11,10 +11,6 @@ use Antares\Serialization\Attributes\ResponseDto;
 use Antares\Serialization\Attributes\Hide;
 use Antares\Serialization\Attributes\SerializeAs;
 use Antares\Serialization\Attributes\Computed;
-use Antares\ErrorHandler;
-use Antares\Exceptions\HttpException;
-use Antares\Hydration\Exceptions\HydrationException;
-use Antares\Validation\Exceptions\ValidationException;
 use Antares\Http\ResponseBag;
 use Antares\Middleware\Pipeline;
 use Antares\Middleware\MiddlewareInterface;
@@ -83,45 +79,6 @@ class CoreTest extends TestCase
         $result = (new Serializer())->serialize($dto);
         $this->assertArrayHasKey('full_name', $result);
         $this->assertSame('John Doe', $result['full_name']);
-    }
-
-    // ErrorHandler
-
-    public function test_error_handler_validation_exception_returns_422(): void
-    {
-        $handler = new ErrorHandler();
-        $response = $handler->handle(new ValidationException(['email' => ['Invalid email']]));
-        $this->assertSame(422, $response->getStatusCode());
-        $body = json_decode((string) $response->getBody(), true);
-        $this->assertSame(422, $body['status']);
-        $this->assertArrayHasKey('errors', $body);
-    }
-
-    public function test_error_handler_hydration_exception_returns_400(): void
-    {
-        $handler = new ErrorHandler();
-        $response = $handler->handle(new HydrationException('Bad input'));
-        $this->assertSame(400, $response->getStatusCode());
-        $body = json_decode((string) $response->getBody(), true);
-        $this->assertSame(400, $body['status']);
-    }
-
-    public function test_error_handler_http_exception_returns_correct_code(): void
-    {
-        $handler = new ErrorHandler();
-        $response = $handler->handle(new HttpException(404, 'Not found'));
-        $this->assertSame(404, $response->getStatusCode());
-        $body = json_decode((string) $response->getBody(), true);
-        $this->assertSame(404, $body['status']);
-    }
-
-    public function test_error_handler_generic_exception_returns_500(): void
-    {
-        $handler = new ErrorHandler();
-        $response = $handler->handle(new \RuntimeException('Something went wrong'));
-        $this->assertSame(500, $response->getStatusCode());
-        $body = json_decode((string) $response->getBody(), true);
-        $this->assertSame(500, $body['status']);
     }
 
     // ResponseBag

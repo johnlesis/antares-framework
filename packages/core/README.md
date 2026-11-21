@@ -725,16 +725,18 @@ Headers are applied to the final response automatically. `ResponseBag` is cleare
 
 ## Error Handling
 
-All exceptions are caught and converted to RFC 7807 JSON responses automatically:
+All exceptions are caught and converted to JSON error responses (`type`, `title`, `status`). What the client sees depends on whether the exception is **meant for the client**:
 
-| Exception | Status Code |
-|-----------|-------------|
-| `ValidationException` | 422 |
-| `HydrationException` | 400 |
-| `HttpException($code)` | `$code` |
-| Any other `Throwable` | 500 |
+| Exception | Status | `title` shown to the client |
+|-----------|--------|-----------------------------|
+| `ValidationException` | 422 | `Validation failed`, plus an `errors` map |
+| `HydrationException` | 400 | its message |
+| Unknown route / wrong method | 404 / 405 (with an `Allow` header) | `Route not found` / `Method not allowed` |
+| `HttpException($code, $message)`, or anything implementing `HttpExceptionInterface` | `$code` | its message |
+| An exception listed in `->exceptions([...])` | the mapped status | its message, or the mapped message |
+| **Anything else** | 500 | `Internal Server Error`; the real message is **never** shown unless `APP_DEBUG` is on |
 
-Throw `HttpException` anywhere in your code:
+Throw `HttpException` anywhere in your code when the client should see the message:
 
 ```php
 use Antares\Exceptions\HttpException;
@@ -742,6 +744,41 @@ use Antares\Exceptions\HttpException;
 throw new HttpException(403, 'Forbidden');
 throw new HttpException(404, 'User not found');
 ```
+
+Or make your own exception safe to show by implementing `HttpExceptionInterface`:
+
+```php
+use Antares\Exceptions\HttpExceptionInterface;
+
+final class EmailAlreadyTaken extends \DomainException implements HttpExceptionInterface
+{
+    public function __construct() { parent::__construct('Email already in use'); }
+    public function getStatusCode(): int { return 409; }
+}
+```
+
+For exceptions you can't change, such as a library's, map them on the application. Subclasses match too, and the first match wins:
+
+```php
+Application::create(__DIR__ . '/..')
+    ->exceptions([
+        ModelNotFoundException::class => 404,                 // keeps the exception's message
+        QueryException::class         => [409, 'Conflict'],   // replaces it
+    ])
+    ->run();
+```
+
+### Debug mode
+
+With `APP_DEBUG=true`, unexpected 500s also include a `debug` block with the real message, exception class, file and trace. It is **on by default, and off when `APP_ENV=production`**:
+
+```env
+APP_DEBUG=false   # never show error details, e.g. a staging server running APP_ENV=local
+```
+
+### Logging
+
+Every 5xx response is logged with the full exception. If a `Psr\Log\LoggerInterface` is registered in the container (the Monolog bridge does this), it is logged there at `error` level; otherwise it goes to PHP's `error_log()`. 4xx responses are not logged.
 
 ---
 

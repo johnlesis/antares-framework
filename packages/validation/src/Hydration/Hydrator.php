@@ -24,8 +24,9 @@ final class Hydrator
         $reflectionClass = new \ReflectionClass($className);
         $constructor = $reflectionClass->getConstructor();
 
+        // A mistake in the DTO class, not in the request: hide it from the client
         if ($constructor === null) {
-            throw new HydrationException("The class must have a constructor.");
+            throw new \LogicException("Cannot hydrate {$className}: the class must have a constructor.");
         }
 
         $parameters = $constructor->getParameters();
@@ -59,46 +60,69 @@ final class Hydrator
                 throw new HydrationException("Missing required parameter: $name");
             }
 
-             if (!$type instanceof \ReflectionNamedType) {
+            if (!$type instanceof \ReflectionNamedType) {
                 $args[] = $data[$name];
                 continue;
             }
-            
-            if (!$type->isBuiltin()) {
-                $ref = new \ReflectionClass($type->getName());
-                if (!empty($ref->getAttributes(Dto::class))) {
-                    $args[] = $this->hydrate($type->getName(), $data[$name]);
+
+            $value = $data[$name];
+
+            if ($value === null) {
+                if ($type->allowsNull()) {
+                    $args[] = null;
                     continue;
                 }
-                throw new HydrationException("Cannot hydrate parameter {$name}: class is not marked with #[Dto].");
+                throw new HydrationException("Parameter {$name} must not be null.");
+            }
+
+            if (!$type->isBuiltin()) {
+                $ref = new \ReflectionClass($type->getName());
+                if (empty($ref->getAttributes(Dto::class))) {
+                    // A mistake in the DTO class, not in the request: hide it from the client
+                    throw new \LogicException(
+                        "Cannot hydrate {$className}::\${$name}: {$type->getName()} is not marked with #[Dto]."
+                    );
+                }
+                if (!is_array($value)) {
+                    throw new HydrationException("Parameter {$name} must be an object.");
+                }
+                $args[] = $this->hydrate($type->getName(), $value);
+                continue;
             }
 
             if ($type->getName() === 'int') {
-                if (filter_var($data[$name], FILTER_VALIDATE_INT) === false) {
+                if (!is_scalar($value) || filter_var($value, FILTER_VALIDATE_INT) === false) {
                     throw new HydrationException("Parameter {$name} must be a valid integer.");
                 }
-                $args[] = (int) $data[$name];
+                $args[] = (int) $value;
                 continue;
             }
             if ($type->getName() === 'float') {
-                if (filter_var($data[$name], FILTER_VALIDATE_FLOAT) === false) {
+                if (!is_scalar($value) || filter_var($value, FILTER_VALIDATE_FLOAT) === false) {
                     throw new HydrationException("Parameter {$name} must be a valid float.");
                 }
-                $args[] = (float)$data[$name];
+                $args[] = (float) $value;
                 continue;
             }
             if ($type->getName() === 'bool') {
-                if (filter_var($data[$name], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === null) {
+                $bool = is_scalar($value) ? filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : null;
+                if ($bool === null) {
                     throw new HydrationException("Parameter {$name} must be a valid boolean.");
                 }
-                $args[] = (bool)$data[$name];
+                $args[] = $bool;
                 continue;
             }
             if ($type->getName() === 'string') {
-                $args[] = (string)$data[$name];
+                if (!is_string($value) && !is_int($value) && !is_float($value)) {
+                    throw new HydrationException("Parameter {$name} must be a string.");
+                }
+                $args[] = (string) $value;
                 continue;
             }
-            $args[] = $data[$name];
+            if ($type->getName() === 'array' && !is_array($value)) {
+                throw new HydrationException("Parameter {$name} must be an array.");
+            }
+            $args[] = $value;
         }
         
         $instance =  $reflectionClass->newInstanceArgs($args);

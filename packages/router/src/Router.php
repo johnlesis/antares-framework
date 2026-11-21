@@ -9,6 +9,8 @@ use Antares\Router\Attributes\Get;
 use Antares\Router\Attributes\Patch;
 use Antares\Router\Attributes\Post;
 use Antares\Router\Attributes\Put;
+use Antares\Router\Exceptions\MethodNotAllowedException;
+use Antares\Router\Exceptions\RouteNotFoundException;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 
@@ -70,8 +72,8 @@ final class Router
                 $result[2],     
                 $result[1][2],
             ],
-            Dispatcher::NOT_FOUND         => throw new RuntimeException('Route not found', 404),
-            Dispatcher::METHOD_NOT_ALLOWED => throw new RuntimeException('Method not allowed', 405),
+            Dispatcher::NOT_FOUND          => throw new RouteNotFoundException($httpMethod, $uri),
+            Dispatcher::METHOD_NOT_ALLOWED => throw new MethodNotAllowedException($httpMethod, $uri, $result[1]),
             default                        => throw new RuntimeException('Unexpected dispatcher result'),
 
         };

@@ -111,6 +111,35 @@ class RouterTest extends TestCase
         $this->assertSame(TestController::class, $controller);
         unlink($cachePath);
     }
+
+    public function test_not_found_throws_route_not_found_exception(): void
+    {
+        $router = new Router();
+        $router->register(\Antares\Tests\Router\ExceptionTestController::class);
+
+        try {
+            $router->match('GET', '/missing');
+            $this->fail('Expected RouteNotFoundException');
+        } catch (\Antares\Router\Exceptions\RouteNotFoundException $e) {
+            $this->assertSame(404, $e->getCode());
+            $this->assertSame('GET', $e->httpMethod);
+            $this->assertSame('/missing', $e->uri);
+        }
+    }
+
+    public function test_method_not_allowed_lists_allowed_methods(): void
+    {
+        $router = new Router();
+        $router->register(\Antares\Tests\Router\ExceptionTestController::class);
+
+        try {
+            $router->match('DELETE', '/items');
+            $this->fail('Expected MethodNotAllowedException');
+        } catch (\Antares\Router\Exceptions\MethodNotAllowedException $e) {
+            $this->assertSame(405, $e->getCode());
+            $this->assertSame(['GET', 'POST'], $e->allowedMethods);
+        }
+    }
 }
 
 class TestController
@@ -132,4 +161,13 @@ class TestController
 
     #[Delete('/users/{id}', 204)]
     public function destroy(): void {}
+}
+
+class ExceptionTestController
+{
+    #[Get('/items')]
+    public function index(): void {}
+
+    #[Post('/items')]
+    public function store(): void {}
 }

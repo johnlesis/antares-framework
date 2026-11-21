@@ -3,9 +3,11 @@
 namespace Antares\Exceptions;
 
 use RuntimeException;
-use Throwable;
 
-class HttpException extends RuntimeException
+/**
+ * An error meant for the client: its status code and message are always shown.
+ */
+class HttpException extends RuntimeException implements HttpExceptionInterface
 {
     public function __construct(int $code = 0, string $message = "")
     {

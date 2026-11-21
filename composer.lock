@@ -236,7 +236,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/core",
-                "reference": "f33e37d643688bb25af9b6f5957489bf076d7bee"
+                "reference": "689f603a89df1f39d837eff1e2029cf4ee474e1f"
             },
             "require": {
                 "fatjon-lleshi/antares-container": "^0.1.0",
@@ -245,6 +245,7 @@
                 "nyholm/psr7": "^1.8",
                 "nyholm/psr7-server": "^1.1",
                 "php": ">=8.2",
+                "psr/log": "^2.0 || ^3.0",
                 "vlucas/phpdotenv": "^5.6"
             },
             "require-dev": {
