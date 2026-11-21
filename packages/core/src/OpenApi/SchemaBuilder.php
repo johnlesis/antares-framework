@@ -14,6 +14,7 @@ use Antares\Validation\Attributes\ValidationAttribute;
 use Antares\Serialization\Attributes\Hide;
 use Antares\Serialization\Attributes\SerializeAs;
 use Antares\Serialization\Attributes\ResponseDto;
+use Antares\Serialization\CaseStyle;
 use Antares\Support\CaseConverter;
 use Antares\Validation\Attributes\ArrayOf;
 use Antares\Validation\Attributes\Between;
@@ -38,7 +39,7 @@ final class SchemaBuilder
         $parameters = $reflection->getConstructor()->getParameters();
 
         $responseDtoAttr = $reflection->getAttributes(ResponseDto::class);
-        $case = !empty($responseDtoAttr) ? $responseDtoAttr[0]->newInstance()->case : null;
+        $case = !empty($responseDtoAttr) ? $responseDtoAttr[0]->newInstance()->case : CaseStyle::CamelCase;
 
         $properties = [];
         $required   = [];
@@ -53,7 +54,7 @@ final class SchemaBuilder
             $serializeAs = $parameter->getAttributes(SerializeAs::class);
             $name = !empty($serializeAs)
                 ? $serializeAs[0]->newInstance()->name
-                : ($case ? CaseConverter::convert($name, $case) : $parameter->getName());
+                : CaseConverter::convert($name, $case);
             
             if ($type === null) {
                 $properties[$name] = ['type' => 'string'];

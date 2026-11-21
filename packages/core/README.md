@@ -4,6 +4,18 @@ Lightweight API-focused PHP framework for PHP 8.2+. Built around explicitness, t
 
 ## Installation
 
+### New project (recommended)
+
+Start from the skeleton app. It comes ready to go, with the framework already wired up:
+
+```bash
+composer create-project fatjon-lleshi/antares-app my-app
+```
+
+### Core only
+
+This package is the framework core. Install it directly only if you are adding Antares to an existing project or building your own setup from scratch:
+
 ```bash
 composer require fatjon-lleshi/antares
 ```
@@ -363,8 +375,9 @@ use Antares\Serialization\Attributes\ResponseDto;
 use Antares\Serialization\Attributes\Hide;
 use Antares\Serialization\Attributes\SerializeAs;
 use Antares\Serialization\Attributes\Computed;
+use Antares\Serialization\CaseStyle;
 
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 readonly class UserResponse
 {
     public function __construct(
@@ -400,7 +413,7 @@ Output:
 
 | Attribute | Target | Description |
 |-----------|--------|-------------|
-| `#[ResponseDto(case: 'snake_case')]` | Class | Marks class as serializable response, sets output case |
+| `#[ResponseDto(case: CaseStyle::SnakeCase)]` | Class | Marks class as serializable response, sets output case |
 | `#[Hide]` | Property | Excludes property from serialized output |
 | `#[SerializeAs('key')]` | Property | Overrides the output key name |
 | `#[Computed]` | Method | Includes method return value in output. `get` prefix is stripped — `getFullName()` becomes `full_name` |
@@ -1017,7 +1030,7 @@ readonly class CreatePostRequest
 
 **`PostResponse.php`:**
 ```php
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 readonly class PostResponse
 {
     public function __construct(

@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Antares\Support;
 
+use Antares\Serialization\CaseStyle;
+
 final class CaseConverter
 {
-    public static function convert(string $name, string $case): string
+    public static function convert(string $name, CaseStyle $case): string
     {
         return match($case) {
-            'snake_case' => strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $name)),
-            'pascal_case' => ucfirst($name),
-            'kebab_case' => strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $name)),
-            default => $name,
+            CaseStyle::SnakeCase  => strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $name)),
+            CaseStyle::PascalCase => ucfirst($name),
+            CaseStyle::KebabCase  => strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $name)),
+            CaseStyle::CamelCase  => $name,
         };
     }
 }

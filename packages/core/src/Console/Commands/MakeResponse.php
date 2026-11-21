@@ -23,8 +23,9 @@ namespace App\Responses;
 use Antares\Serialization\Attributes\ResponseDto;
 use Antares\Serialization\Attributes\Hide;
 use Antares\Serialization\Attributes\SerializeAs;
+use Antares\Serialization\CaseStyle;
 
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 final readonly class {$name}
 {
     public function __construct(

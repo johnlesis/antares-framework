@@ -1,8 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="vendor/autoload.php" colors="true">
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
     <testsuites>
-        <testsuite name="Antares Test Suite">
-            <directory>tests/</directory>
+        <testsuite name="Container">
+            <directory>packages/container/tests</directory>
+        </testsuite>
+        <testsuite name="Router">
+            <directory>packages/router/tests</directory>
+        </testsuite>
+        <testsuite name="Validation">
+            <directory>packages/validation/tests</directory>
+        </testsuite>
+        <testsuite name="Core">
+            <directory>packages/core/tests</directory>
+        </testsuite>
+        <testsuite name="Monorepo">
+            <directory>tests</directory>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory>packages/*/src</directory>
+            <directory>packages/bridges/*/src</directory>
+        </include>
+    </source>
 </phpunit>

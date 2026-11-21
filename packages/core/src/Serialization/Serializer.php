@@ -15,7 +15,7 @@ final class Serializer
     {
         $reflection = new ReflectionClass($dto);
         $attributes = $reflection->getAttributes(ResponseDto::class);
-        $case = !empty($attributes) ? $attributes[0]->newInstance()->case : 'camel_case';
+        $case = !empty($attributes) ? $attributes[0]->newInstance()->case : CaseStyle::CamelCase;
 
         $result = [];
         foreach ($reflection->getProperties() as $property) {

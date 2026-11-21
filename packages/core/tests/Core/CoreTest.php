@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Antares\Tests\Core;
 
 use Antares\Support\CaseConverter;
+use Antares\Serialization\CaseStyle;
 use Antares\Serialization\Serializer;
 use Antares\Serialization\Attributes\ResponseDto;
 use Antares\Serialization\Attributes\Hide;
@@ -29,24 +30,24 @@ class CoreTest extends TestCase
 
     public function test_case_converter_snake_case(): void
     {
-        $this->assertSame('first_name', CaseConverter::convert('firstName', 'snake_case'));
-        $this->assertSame('created_at', CaseConverter::convert('createdAt', 'snake_case'));
+        $this->assertSame('first_name', CaseConverter::convert('firstName', CaseStyle::SnakeCase));
+        $this->assertSame('created_at', CaseConverter::convert('createdAt', CaseStyle::SnakeCase));
     }
 
     public function test_case_converter_pascal_case(): void
     {
-        $this->assertSame('FirstName', CaseConverter::convert('firstName', 'pascal_case'));
+        $this->assertSame('FirstName', CaseConverter::convert('firstName', CaseStyle::PascalCase));
     }
 
     public function test_case_converter_kebab_case(): void
     {
-        $this->assertSame('first-name', CaseConverter::convert('firstName', 'kebab_case'));
-        $this->assertSame('created-at', CaseConverter::convert('createdAt', 'kebab_case'));
+        $this->assertSame('first-name', CaseConverter::convert('firstName', CaseStyle::KebabCase));
+        $this->assertSame('created-at', CaseConverter::convert('createdAt', CaseStyle::KebabCase));
     }
 
     public function test_case_converter_default_returns_unchanged(): void
     {
-        $this->assertSame('firstName', CaseConverter::convert('firstName', 'camel_case'));
+        $this->assertSame('firstName', CaseConverter::convert('firstName', CaseStyle::CamelCase));
     }
 
     // Serializer
@@ -176,7 +177,7 @@ class CoreTest extends TestCase
 
 // DTOs for Serializer tests
 
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 readonly class SnakeCaseDto
 {
     public function __construct(
@@ -185,7 +186,7 @@ readonly class SnakeCaseDto
     ) {}
 }
 
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 readonly class HiddenFieldDto
 {
     public function __construct(
@@ -195,7 +196,7 @@ readonly class HiddenFieldDto
     ) {}
 }
 
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 readonly class SerializeAsDto
 {
     public function __construct(
@@ -204,7 +205,7 @@ readonly class SerializeAsDto
     ) {}
 }
 
-#[ResponseDto(case: 'snake_case')]
+#[ResponseDto(case: CaseStyle::SnakeCase)]
 readonly class ComputedDto
 {
     public function __construct(

@@ -16,18 +16,6 @@ env:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package:
-          - path: 'validation'
-            phpstan: true
-          - path: 'container'
-            phpstan: true
-          - path: 'router'
-            phpstan: true
-          - path: 'core'
-            phpstan: true
     steps:
       - uses: actions/checkout@v4
 
@@ -37,18 +25,16 @@ jobs:
           php-version: '8.3'
           tools: composer
 
+      # Installs from the monorepo root: every package is symlinked from
+      # packages/ via path repositories, so CI tests the code in this commit.
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
-        working-directory: packages/${{ matrix.package.path }}
 
       - name: Run PHPUnit
-        run: ./vendor/bin/phpunit
-        working-directory: packages/${{ matrix.package.path }}
+        run: vendor/bin/phpunit
 
       - name: Run PHPStan
-        if: matrix.package.phpstan
-        run: ./vendor/bin/phpstan analyse
-        working-directory: packages/${{ matrix.package.path }}
+        run: vendor/bin/phpstan analyse --memory-limit=1G
 
   packages_split:
     runs-on: ubuntu-latest

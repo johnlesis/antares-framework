@@ -1,0 +1,13 @@
+parameters:
+    level: 5
+    paths:
+        - packages/container/src
+        - packages/router/src
+        - packages/validation/src
+        - packages/core/src
+        - packages/bridges/monolog/src
+        - packages/bridges/eloquent/src
+    ignoreErrors:
+        # validation: enum helpers called on UnitEnum
+        - '#Call to an undefined static method UnitEnum#'
+        - '#Access to an undefined property UnitEnum#'

@@ -101,7 +101,7 @@ class Application
             \Swoole\Http\Request $swooleRequest,
             \Swoole\Http\Response $swooleResponse,
         ) use ($converter): void {
-            $request = $converter->createFromSwoole($swooleRequest); // @phpstan-ignore class.notFound
+            $request = $converter->createFromSwoole($swooleRequest);
             $response = $this->handle($request);
 
             $swooleResponse->status($response->getStatusCode());

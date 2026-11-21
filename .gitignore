@@ -7,3 +7,4 @@ packages/bridges/*/vendor/
 packages/bridges/*/composer.lock
 .phpunit.result.cache
 composer.json.dev
+WORKFLOW.md
