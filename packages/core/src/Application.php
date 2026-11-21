@@ -254,26 +254,22 @@ class Application
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // Errors from routing, guards, DTOs and controllers become a response *inside*
-        // the pipeline, so middleware still runs on the way out (e.g. CORS headers on
-        // a 404 or 422). Errors thrown by middleware itself are caught by the outer try.
+        // A new request starts here, before any middleware, so neither middleware nor
+        // controllers see scoped instances left over from the previous request under a
+        // worker runtime, and both share the same instances within this one.
+        $this->container->clearScoped();
+
+        // Every layer turns its exceptions into an error response, so the middleware
+        // outside it still runs on the way out (e.g. CORS headers on a 404, a 422, or
+        // a 429 thrown by a rate-limit middleware further in).
         $pipeline = new Pipeline(
             $this->container,
             $this->middleware,
-            function (ServerRequestInterface $request): ResponseInterface {
-                try {
-                    return $this->dispatcher->dispatch($request);
-                } catch (\Throwable $e) {
-                    return $this->errorHandler->handle($e);
-                }
-            },
+            fn(ServerRequestInterface $request): ResponseInterface => $this->dispatcher->dispatch($request),
+            fn(\Throwable $e): ResponseInterface => $this->errorHandler->handle($e),
         );
 
-        try {
-            return $pipeline->run($request);
-        } catch (\Throwable $e) {
-            return $this->errorHandler->handle($e);
-        }
+        return $pipeline->run($request);
     }
 
     /**
